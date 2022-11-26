@@ -2,4 +2,5 @@
 .vscode
 temp
 data
+models
 **/__pycache__
