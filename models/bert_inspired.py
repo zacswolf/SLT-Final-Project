@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 from layers.transformer_encdec import Encoder, EncoderLayer
@@ -11,11 +12,13 @@ class BertInspired(nn.Module):
     """
     def __init__(self, config):
         super(BertInspired, self).__init__()
-        self.pred_len = config.pred_len
         self.output_attention = config.output_attention
 
         # Embedding
-        self.enc_embedding = DataEmbedding(config.enc_in, config.d_model, config.dropout)
+        c_in = config.enc_in
+        if type(config.enc_in) is tuple:
+            c_in = math.prod(config.enc_in)
+        self.enc_embedding = DataEmbedding(c_in, config.d_model, config.dropout)
         # Encoder
         self.encoder = Encoder(
             [
@@ -37,12 +40,14 @@ class BertInspired(nn.Module):
         
 
     def forward(self, x_enc, enc_self_mask=None):
-        enc_out = self.enc_embedding(x_enc)
-        enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
+        x_enc  = x_enc.reshape(*x_enc.shape[:-2], -1)
 
-        print ("enc out shape: ", enc_out.shape)
+        enc_emb = self.enc_embedding(x_enc)
+        enc_out, attns = self.encoder(enc_emb, attn_mask=enc_self_mask)
+
+        # print ("enc out shape: ", enc_out.shape)
         out = self.fc(enc_out) #out[:, -1, :]
-        print ("linear out shape: ", out.shape)
+        # print ("linear out shape: ", out.shape)
         out = self.relu(out)
 
         if self.output_attention:

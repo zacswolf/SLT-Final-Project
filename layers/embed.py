@@ -28,6 +28,11 @@ class TokenEmbedding(nn.Module):
     def __init__(self, c_in, d_model):
         super(TokenEmbedding, self).__init__()
         padding = 1 if torch.__version__>='1.5.0' else 2
+
+        # # TODO: Do something smart with this
+        # if type(c_in) is tuple:
+        #     c_in = math.prod(c_in)
+
         self.tokenConv = nn.Conv1d(in_channels=c_in, out_channels=d_model, 
                                     kernel_size=3, padding=padding, padding_mode='circular')
         for m in self.modules():
@@ -41,13 +46,13 @@ class TokenEmbedding(nn.Module):
 class DataEmbedding(nn.Module):
     def __init__(self, c_in, d_model, dropout=0.1):
         super(DataEmbedding, self).__init__()
-
         self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
         self.position_embedding = PositionalEmbedding(d_model=d_model)
 
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x):
+        # x = x.reshape(*x.shape[:-2], -1) # TODO: Figure out how to put this logic in value_embedding
         x = self.value_embedding(x) + self.position_embedding(x)
         
         return self.dropout(x)
