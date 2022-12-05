@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 
@@ -26,15 +27,18 @@ class Dataset_Custom(Dataset):
 
     def __read_data__(self):
         # TODO: Impliment scaling
+        # dataset_128mel_16frames_100ms
+        data_folder = f"data/dataset_{self.config.num_mel}mel_{self.config.num_frames}frames_{self.config.segment_duration}ms"
+        # f"data/dataset_{self.config.data_id}/{self.flag}_feats.npy"
         self.data_x = np.float32(
             np.load(
-                f"data/dataset_{self.config.data_id}/{self.flag}_feats.npy",
+                os.path.join(data_folder, f"{self.flag}_feats.npy"),
                 allow_pickle=True,
             )
-        )  # T_flag x num_mf x num_windows
+        )  # num_mf x num_frames
         self.data_y = np.float32(
             np.load(
-                f"data/dataset_{self.config.data_id}/{self.flag}_labels.npy",
+                os.path.join(data_folder, f"{self.flag}_labels.npy"),
                 allow_pickle=True,
             )
         )  # T_flag x 9
