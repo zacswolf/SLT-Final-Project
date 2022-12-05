@@ -8,3 +8,5 @@ data
 lightning_logs
 .lr_find_*
 .scale_batch_size_*
+
+saved_model.pth
