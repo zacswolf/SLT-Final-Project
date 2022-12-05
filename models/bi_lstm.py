@@ -18,21 +18,31 @@ class bi_LSTM(nn.Module):
         assert config.model_type == "biLSTM"
 
         self.config = config
-        
+
         # Create layers
-        self.lstm = nn.LSTM(config.input_dim, config.hidden_dim, config.num_layers, batch_first=True, bidirectional=True)
-        self.fc = nn.Linear(config.hidden_dim*2, config.output_dim)
-        self.relu = nn.ReLU()
+        self.conv1 = nn.Conv2d(in_channels=self.config.input_dim, out_channels=x, kernel_size=(2,2), stride=(1,1))
+        self.conv2 = nn.Conv2d(in_channels=self.config.input_dim, out_channels=x, kernel_size=(2,2), stride=(1,1))
+        self.maxPool1 = nn.MaxPool3d(kernel_size=(2,2), stride=1)
+        self.drop1 = nn.Dropout(0.4)
+
+        self.conv3 = nn.Conv2d(in_channels=self.config.input_dim, out_channels=x, kernel_size=(2,2), stride=(1,1))
+        self.conv4 = nn.Conv2d(in_channels=self.config.input_dim, out_channels=x, kernel_size=(2,2), stride=(1,1))
+        self.maxPool2 = nn.MaxPool3d(kernel_size=(2,2), stride=1)
+        self.drop2 = nn.Dropout(0.4)
+
+        self.conv5 = nn.Conv2d(in_channels=self.config.input_dim, out_channels=x, kernel_size=(2,2), stride=(1,1))
+        self.conv6 = nn.Conv2d(in_channels=self.config.input_dim, out_channels=x, kernel_size=(2,2), stride=(1,1))
+        self.maxPool3 = nn.MaxPool3d(kernel_size=(2,2), stride=1)
+        self.drop3 = nn.Dropout(0.4)
+
+        #self.reshape = 
+
+        self.lstm1 = nn.LSTM(input_size=x, hidden_size=self.config.hidden_dim, num_layers=3, batch_first=True, bidirectional=True, dropout=0.4)
+
+        self.linear = nn.Linear(in_features=x out_features=self.config.output_dim)
         
     def forward(self, x):
-        h0 = torch.zeros(self.config.num_layers*2, x.size(0), self.config.hidden_dim).to(self.config.device) # hidden state
-        c0 = torch.zeros(self.config.num_layers*2, x.size(0), self.config.hidden_dim).to(self.config.device) # cell state
         
-        x = x[:, None, :]
-        #print ("init x shape: ", x.shape)
-        out, _ = self.lstm(x, (h0, c0))
-        #print ("lstm out shape: ", out.shape)
-        out = self.fc(out[:, -1, :])
-        #print ("linear out shape: ", out.shape)
-        out = self.relu(out)
+        print ("input: ", x.shape)
+
         return out
