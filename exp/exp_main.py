@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 import numpy as np
-
+from utils.loss import macro_soft_f1
 
 class ExpMain(pl.LightningModule):
     def __init__(self, model, config):
@@ -15,7 +15,7 @@ class ExpMain(pl.LightningModule):
 
     def _select_criterion(self):
         if self.config.loss == "F1":
-            raise NotImplementedError()
+            criterion = macro_soft_f1
         else:
             criterion = nn.BCEWithLogitsLoss()
 
