@@ -2,6 +2,7 @@
 .vscode
 temp
 data
+trained_models
 **/__pycache__
 
 # Pytorch Lightning
