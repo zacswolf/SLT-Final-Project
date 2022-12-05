@@ -11,3 +11,4 @@ lightning_logs
 .scale_batch_size_*
 
 saved_model.pth
+pretrained_mdls
