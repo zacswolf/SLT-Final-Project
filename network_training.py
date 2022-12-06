@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from models.bi_lstm import bi_LSTM
 from models.transformer import Transformer
 from models.bert_inspired import BertInspired
-from models.ast_models import ASTModel
+#from models.ast_models import ASTModel
 from utils.tools import dotdict
 from utils.data_loader import DataModule
 import pytorch_lightning as pl
@@ -21,7 +21,7 @@ import os
 
 
 #### MODEL
-model_type = "ssast"  # "bert_inspired" "transformer" or "biLSTM"
+model_type = "biLSTM"  # "bert_inspired" "transformer" or "biLSTM"
 
 model = None
 model_config = None
@@ -32,7 +32,7 @@ if model_type == "biLSTM":
             "input_dim": 128,
             "hidden_dim": 128,
             "output_dim": 9,
-            "num_layers": 2,
+            "num_layers": 3,
             "model_type": model_type,
         }
     )
@@ -103,11 +103,11 @@ elif model_type == "ssast":
     # fshape=128, tshape=2, fstride=128, tstride=2,
     # input_fdim=128, input_tdim=1024, model_size='base',
     # pretrain_stage=True, load_pretrained_mdl_path=None
-    model = ASTModel(
-        **model_config,
-        pretrain_stage=False,
-        load_pretrained_mdl_path="pretrained_mdls/SSAST-Base-Patch-400.pth"
-    )
+    # model = ASTModel(
+    #     **model_config,
+    #     pretrain_stage=False,
+    #     load_pretrained_mdl_path="pretrained_mdls/SSAST-Base-Patch-400.pth"
+    # )
 
 
 assert model is not None, "Didn't select a valid model"
@@ -118,14 +118,14 @@ exp_config = dotdict(
     {
         "seq_len": 1,
         "pred_len": 1,
-        "data_id": "16x32",
-        "batch_size": 512,
+        "data_id": "64x16",
+        "batch_size": 128,
         "learning_rate": 0.000001,
         "max_epochs": 5,
         "loss": "BCE",
-        "num_mel": 128,
+        "num_mel": 64,
         "num_frames": 16,
-        "segment_duration": 100,
+        "segment_duration": 50,
     }
 )
 assert model_type != "ssast" or exp_config.seq_len == 1, "SSAST needs seq_len == 1"
@@ -151,10 +151,10 @@ trainer_params = {
     # "auto_lr_find": True,
     "max_epochs": exp_config.max_epochs,
     "logger": True,
-    "accelerator": "gpu",
-    "devices": -1,
-    "auto_select_gpus": True,
-    "strategy": strategy,  # GPUS
+    # "accelerator": "cpu",
+    # "devices": -1,
+    # "auto_select_gpus": True,
+    # "strategy": strategy,  # GPUS
 }
 trainer = pl.Trainer(**trainer_params)
 
