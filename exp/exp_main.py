@@ -4,6 +4,7 @@ import pytorch_lightning as pl
 import numpy as np
 from utils.loss import macro_soft_f1
 
+
 class ExpMain(pl.LightningModule):
     def __init__(self, model, config):
         super().__init__()
@@ -75,6 +76,19 @@ class ExpMain(pl.LightningModule):
         self.log("test_loss", loss)
 
         return loss
+
+    def predict_step(self, batch, batch_idx=0):
+        # validation_step defines the validation loop. It is independent of forward
+        feats, labels = batch
+        feats = feats.float()
+        labels = labels.float()
+
+        output = self.model(feats)
+
+        return {
+            "output": output,
+            "labels": labels,
+        }
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)

@@ -45,7 +45,6 @@ class BertInspired(nn.Module):
         )
 
         self.fc = nn.Linear(config.d_model, config.c_out)
-        self.relu = nn.ReLU()
 
     def forward(self, x_enc, enc_self_mask=None):
         x_enc = x_enc.reshape(*x_enc.shape[:-2], -1)

@@ -15,7 +15,7 @@ class Dataset_Custom(Dataset):
         config.pred_len = config.pred_len or config.seq_len  # Default to config.seq_len
         assert config.pred_len is not None
         assert config.pred_len > 0 and config.pred_len <= config.seq_len
-        assert flag in ["train", "test", "val"]
+        assert flag in ["train", "test", "val", "pred"]
         self.config = config
         self.flag = flag
 
@@ -24,22 +24,25 @@ class Dataset_Custom(Dataset):
         self.__read_data__()
 
     def __read_data__(self):
-        # TODO: Impliment scaling
-        # dataset_128mel_16frames_100ms
+        _flag = self.flag if self.flag != "pred" else "test"
         data_folder = f"data/dataset_{self.config.num_mel}mel_{self.config.num_frames}frames_{self.config.segment_duration}ms"
-        # f"data/dataset_{self.config.data_id}/{self.flag}_feats.npy"
+
         self.data_x = np.float32(
             np.load(
-                os.path.join(data_folder, f"{self.flag}_feats.npy"),
+                os.path.join(data_folder, f"{_flag}_feats.npy"),
                 allow_pickle=True,
             )
         )  # num_mf x num_frames
         self.data_y = np.float32(
             np.load(
-                os.path.join(data_folder, f"{self.flag}_labels.npy"),
+                os.path.join(data_folder, f"{_flag}_labels.npy"),
                 allow_pickle=True,
             )
         )  # T_flag x 9
+
+        if self.flag == "pred":
+            self.data_x = self.data_x[:100]
+            self.data_y = self.data_y[:100]
 
     def __getitem__(self, index):
         # TODO: Add some smart windowing
@@ -138,6 +141,7 @@ class DataModule(pl.LightningDataModule):
         self.data_train = Dataset_Custom(self.config, flag="train")
         self.data_val = Dataset_Custom(self.config, flag="val")
         self.data_test = Dataset_Custom(self.config, flag="test")
+        self.data_pred = Dataset_Custom(self.config, flag="pred")
 
     def train_dataloader(self):
         print("train", len(self.data_train))
@@ -151,6 +155,7 @@ class DataModule(pl.LightningDataModule):
 
     def val_dataloader(self):
         print("val", len(self.data_val))
+        assert len(self.data_val) > self.config.batch_size
         return DataLoader(
             self.data_val,
             batch_size=self.config.batch_size,
@@ -161,10 +166,21 @@ class DataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         print("test", len(self.data_test))
+        assert len(self.data_test) > self.config.batch_size
         return DataLoader(
             self.data_test,
             batch_size=self.config.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
             drop_last=True,
+        )
+
+    def predict_dataloader(self):
+        print("pred", len(self.data_pred))
+        return DataLoader(
+            self.data_pred,
+            batch_size=self.config.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            drop_last=False,
         )
