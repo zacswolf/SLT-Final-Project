@@ -16,8 +16,6 @@ class Dataset_Custom(Dataset):
         assert config.pred_len is not None
         assert config.pred_len > 0 and config.pred_len <= config.seq_len
         assert flag in ["train", "test", "val"]
-        assert config.data_id is not None
-
         self.config = config
         self.flag = flag
 

@@ -19,9 +19,34 @@ import pytorch_lightning as pl
 from exp.exp_main import ExpMain
 import os
 
+model_type = "bert_inspired"  # "bert_inspired" "transformer" or "biLSTM"
+
+#### DATA MODULE AND EXPIRIMENT
+exp_config = dotdict(
+    {
+        "seq_len": 1,
+        "pred_len": 1,
+        "batch_size": 512,
+        "learning_rate": 0.000001,
+        "max_epochs": 5,
+        "loss": "BCE",
+        "num_mel": 128,
+        "num_frames": 16,
+        "segment_duration": 100,
+    }
+)
+assert model_type != "ssast" or exp_config.seq_len == 1, "SSAST needs seq_len == 1"
+assert exp_config.pred_len <= exp_config.seq_len
+
+strategy = "dp"  # ["ddp", "ddp_spawn", "ddp_notebook", "ddp_fork", None]
+# num_workers = 4  # os.cpu_count() * (strategy != "ddp_spawn")
+
+
+pl.seed_everything(seed=123, workers=True)
+data_module = DataModule(exp_config, num_workers=0)
+
 
 #### MODEL
-model_type = "ssast"  # "bert_inspired" "transformer" or "biLSTM"
 
 model = None
 model_config = None
@@ -61,7 +86,10 @@ elif model_type == "transformer":
 elif model_type == "bert_inspired":
     model_config = dotdict(
         {
-            "enc_in": (32, 16),  # (#windows, # mel filters)
+            "enc_in": (
+                exp_config.num_mel,
+                exp_config.num_frames,
+            ),  # (#windows, # mel filters)
             "c_out": 9,
             "d_model": 512,
             "dropout": 0.05,
@@ -94,10 +122,11 @@ elif model_type == "ssast":
             "fstride": 10,
             "tstride": 10,
             "input_fdim": 128,  # we need data sets with 128 mel filters
-            "input_tdim": 16,  # This can change depending on data set
+            "input_tdim": exp_config.num_freq,  # This can change depending on data set
             "model_size": "base",
         }
     )
+    assert exp_config.num_mel == 128, "SSAST needs num_mel==128"
 
     # label_dim=527,
     # fshape=128, tshape=2, fstride=128, tstride=2,
@@ -111,32 +140,6 @@ elif model_type == "ssast":
 
 
 assert model is not None, "Didn't select a valid model"
-
-
-#### DATA MODULE AND EXPIRIMENT
-exp_config = dotdict(
-    {
-        "seq_len": 1,
-        "pred_len": 1,
-        "data_id": "16x32",
-        "batch_size": 512,
-        "learning_rate": 0.000001,
-        "max_epochs": 5,
-        "loss": "BCE",
-        "num_mel": 128,
-        "num_frames": 16,
-        "segment_duration": 100,
-    }
-)
-assert model_type != "ssast" or exp_config.seq_len == 1, "SSAST needs seq_len == 1"
-assert exp_config.pred_len <= exp_config.seq_len
-
-strategy = "dp"  # ["ddp", "ddp_spawn", "ddp_notebook", "ddp_fork", None]
-# num_workers = 4  # os.cpu_count() * (strategy != "ddp_spawn")
-
-
-pl.seed_everything(seed=123, workers=True)
-data_module = DataModule(exp_config, num_workers=0)
 
 
 # Intantiate Lightning Model
